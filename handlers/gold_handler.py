@@ -5,21 +5,7 @@ from services.gold_services_tr import get_gram_gold_price
 from database import set_subscription, get_active_subscribers
 
 
-async def start_buttons_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    # 1. KRİTİK NOKTA: Telegram'a tıklamayı aldığımızı bildiriyoruz (Yükleme simgesi durur)
-    await query.answer()
-    
-    # 2. Hangi butona basıldığını kontrol ediyoruz
-    if query.data == "get_gold_now":
-        # Altın komutu handler'ını çağırıyoruz
-        await altin_komutu_handler(update, context)
-        
-    elif query.data == "get_steam_now":
-        # Steam verisini getiren fonksiyonunu çağırabilirsin
-        await query.message.reply_text("🎮 *Steam indirimleri yükleniyor...*", parse_mode="Markdown")
-
-# 1. Gold Mesajı Oluşturucu (Kullanıcının abonelik durumuna göre buton üretir)
+# 1. Yardımcı Fonksiyon: Sadece mesaj ve buton nesnesini üretir (Telegram Callback Değildir)
 def build_gold_message(user_id: int):
     data = get_gram_gold_price()
     if not data:
@@ -34,31 +20,56 @@ def build_gold_message(user_id: int):
         f"📥 *Alış Fiyatı:* `{data['alis']} TL`\n"
     )
     
-    # Kullanıcı zaten abone mi kontrol et
+    # Kullanıcının abonelik durumuna göre dinamik buton
     aktif_aboneler = get_active_subscribers()
     if user_id in aktif_aboneler:
         keyboard = [[InlineKeyboardButton("❌ Abonelikten Çık", callback_data="unsub_gold")]]
     else:
-        keyboard = [[InlineKeyboardButton("🔔 Her Sabah 09:00'da Bildirim Al (Abone Ol)", callback_data="sub_gold")]]
+        keyboard = [[InlineKeyboardButton("🔔 Her Sabah 09:00'da Bildirim Al", callback_data="sub_gold")]]
         
     return text, InlineKeyboardMarkup(keyboard)
 
-# 2. /gold Komut Handler'ı
+
+# 2. Komut Handler'ı: Telegram'ın çağırdığı asıl async fonksiyon (/gold için)
 async def altin_komutu_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
+    user = update.effective_user
+    if not user:
+        return
+        
+    user_id = user.id
     text, reply_markup = build_gold_message(user_id)
     
-    # 1. Eğer normal komut yazıldıysa (/gold) -> update.message doludur
+    # Normal mesaj (/gold yazıldıysa)
     if update.message:
         await update.message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
         
-    # 2. Eğer butona basıldıysa ("Canlı Altın" butonu) -> update.callback_query doludur
-    elif update.callback_query:
+    # Butona basılarak tetiklendiyse (Inline buton)
+    elif update.callback_query and update.callback_query.message:
         await update.callback_query.message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
 
-# 3. Buton Tıklama Handler'ı (Abone Ol / Çık)
+
+# 3. Başlangıç Menüsü Buton Tıklamaları
+async def start_buttons_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not query:
+        return
+        
+    await query.answer()
+    
+    if query.data == "get_gold_now":
+        await altin_komutu_handler(update, context)
+        
+    elif query.data == "get_steam_now":
+        if query.message:
+            await query.message.reply_text("🎮 *Steam indirimleri yükleniyor...*", parse_mode="Markdown")
+
+
+# 4. Abonelik İşlemleri Buton Tıklamaları (Abone Ol / Çık)
 async def gold_button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
+    if not query or not query.from_user:
+        return
+        
     user_id = query.from_user.id
     await query.answer()
     
@@ -71,6 +82,6 @@ async def gold_button_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     elif query.data == "unsub_gold":
         set_subscription(user_id, False)
         await query.edit_message_text(
-            text="🔴 *Aboneliğin iptal edildi.* Dilediğin zaman `/gold` veya `/abone_ol` ile tekrar katılabilirsin.",
+            text="🔴 *Aboneliğin iptal edildi.* Dilediğin zaman `/gold` ile tekrar katılabilirsin.",
             parse_mode="Markdown"
         )
