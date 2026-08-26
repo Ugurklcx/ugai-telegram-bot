@@ -4,7 +4,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 async def password_creator_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """/pass komutu tetiklendiğinde çalışan handler"""
+    """/pass komutu ile çalışan handler"""
     
     total = []
     password = []
