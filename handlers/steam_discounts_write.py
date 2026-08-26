@@ -3,16 +3,19 @@ from telegram.ext import ContextTypes
 from services.steam_service import get_steam_tr_deals
 
 async def steam_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # 1. İstek butondan mı yoksa yazılı komuttan mı geldi kontrol et
+    target_message = update.message if update.message else update.callback_query.message
+
     indirimler = await get_steam_tr_deals()
 
     if not indirimler:
-        await update.message.reply_text("❌ Şu an herhangi bir Steam indirimi bulunamadı.")
+        await target_message.reply_text("❌ Şu an herhangi bir Steam indirimi bulunamadı.")
         return
 
-    await update.message.reply_text("⏳ Steam fırsatları aranıyor, lütfen bekleyin...")
+    await target_message.reply_text("⏳ Steam fırsatları getiriliyor, lütfen bekleyin...")
     
     for mesaj in indirimler:
-        await update.message.reply_photo(
+        await target_message.reply_photo(
             photo=mesaj["image_url"],
             caption=(
                 f"<b>{mesaj['name']}</b>\n"
