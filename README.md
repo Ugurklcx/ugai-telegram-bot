@@ -21,15 +21,18 @@ Bu proje aktif olarak geliştirilmeye devam eden, içerisinde yapay zeka sohbet 
     cd ugai-telegram-bot
 
 2. **Bağımlılıkları yükleyin:**
+   ```bash
    pip install -r requirements.txt
 
-3. **API Gereklilikleri**
+3. **API Gereklilikleri:**
+
    .env_example dosyasının adını .env olarak değiştiriniz ve kendi API kodlarınızı giriniz.
    
    Terminal:
    cp .env_example .env
 
-4. **Başlatma**
+4. **Başlatma:**
+
     main.py üzerinden botu başlatınız.
 
 *Yeni özellikler ve mimari güncellemeler düzenli olarak eklenmektedir.*
