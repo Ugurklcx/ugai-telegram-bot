@@ -24,7 +24,9 @@ Bu proje aktif olarak geliştirilmeye devam eden, içerisinde yapay zeka sohbet 
    pip install -r requirements.txt
 
 3. **API Gereklilikleri**
-   .env_example dosyasının adını .env olarak değiştiriniz ve kendi API kodlarınızı giriniz.
+   .env_example dosyasının adını .env olarak değiştiriniz ve kendi API kodlarınızı giriniz. 
+   Terminal:
+   cp .env_example .env
 
 4. **Başlatma**
     main.py üzerinden botu başlatınız.
