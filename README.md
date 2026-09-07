@@ -17,14 +17,15 @@ Bu proje aktif olarak geliştirilmeye devam eden, içerisinde yapay zeka sohbet 
 
 1. **Repoyu klonlayın:**
    ```bash
-   git clone [https://github.com/Ugurklcx/ugai-telegram-bot.git](https://github.com/Ugurklcx/ugai-telegram-bot.git)
-   cd ugai-telegram-bot
+    git clone https://github.com/Ugurklcx/ugai-telegram-bot.git
+    cd ugai-telegram-bot
 
 2. **Bağımlılıkları yükleyin:**
    pip install -r requirements.txt
 
 3. **API Gereklilikleri**
-   .env_example dosyasının adını .env olarak değiştiriniz ve kendi API kodlarınızı giriniz. 
+   .env_example dosyasının adını .env olarak değiştiriniz ve kendi API kodlarınızı giriniz.
+   
    Terminal:
    cp .env_example .env
 
