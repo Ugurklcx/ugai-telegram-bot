@@ -12,4 +12,21 @@ Bu proje aktif olarak geliştirilmeye devam eden, içerisinde yapay zeka sohbet 
 * ☁️ **Hava Durumu Servisi:** OpenWeatherMap API entegrasyonu.
 
 ---
+
+## 🛠️ Kurulum ve Çalıştırma
+
+1. **Repoyu klonlayın:**
+   ```bash
+   git clone [https://github.com/Ugurklcx/ugai-telegram-bot.git](https://github.com/Ugurklcx/ugai-telegram-bot.git)
+   cd ugai-telegram-bot
+
+2. **Bağımlılıkları yükleyin:**
+   pip install -r requirements.txt
+
+3. **API Gereklilikleri**
+   .env_example dosyasının adını .env olarak değiştiriniz ve kendi API kodlarınızı giriniz.
+
+4. **Başlatma**
+    main.py üzerinden botu başlatınız.
+
 *Yeni özellikler ve mimari güncellemeler düzenli olarak eklenmektedir.*
