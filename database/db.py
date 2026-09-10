@@ -1,18 +1,14 @@
+import os
 import sqlite3
 
-# Veritabanı dosya yolunu tek bir değişkenden yönetiyoruz
-DB_YOLU = r'C:\Users\MrUqu\Documents\GitHub\Python\4-YapayZeka\Database.db'
-
-# --- 1. SOHBET / ÖĞRETME SİSTEMİ VERİTABANI İŞLEMLERİ ---
+# Dinamik Yol (Windows/Linux/Docker sorunsuz çalışır)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_YOLU = os.path.join(BASE_DIR, "Database.db")
 
 def tabloyu_olustur():
-    """Sohbet ve abonelik tablolarını oluşturur."""
+    """Abonelik ve Kullanıcı tablolarını oluşturur."""
     with sqlite3.connect(DB_YOLU, timeout=10) as conn:
         cursor = conn.cursor()
-        
-        # Konuşma / Öğretme Tablosu
-        cursor.execute('''CREATE TABLE IF NOT EXISTS metinler 
-                         (konusma TEXT PRIMARY KEY, cevap TEXT)''')
         
         # Abonelik Tablosu
         cursor.execute('''CREATE TABLE IF NOT EXISTS subscribers (
@@ -22,28 +18,8 @@ def tabloyu_olustur():
                         )''')
         conn.commit()
 
-def cevap_bul(soru: str): 
-    """Veritabanından öğretilen cevabı getirir."""
-    with sqlite3.connect(DB_YOLU, timeout=10) as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT cevap FROM metinler WHERE konusma = ?", (soru,))
-        sonuc = cursor.fetchone()
-        return sonuc[0] if sonuc else None
-
-def yeni_ogret(soru: str, cevap: str):
-    """Soru ve cevabı veritabanına kaydeder/günceller."""
-    with sqlite3.connect(DB_YOLU, timeout=10) as conn:
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO metinler (konusma, cevap) VALUES (?, ?)
-            ON CONFLICT(konusma) DO UPDATE SET cevap = excluded.cevap
-        """, (soru, cevap))
-        conn.commit()
-
-# --- 2. TELEGRAM ABONELİK SİSTEMİ VERİTABANI İŞLEMLERİ ---
-
 def set_subscription(user_id: int, status: bool):
-    """Kullanıcının abonelik durumunu günceller veya yeni kullanıcı ekler."""
+    """Kullanıcının abonelik durumunu günceller."""
     with sqlite3.connect(DB_YOLU, timeout=10) as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -54,7 +30,7 @@ def set_subscription(user_id: int, status: bool):
         conn.commit()
 
 def get_active_subscribers():
-    """Aboneliği True (1) olan kullanıcıların ID'lerini listeler."""
+    """Aboneliği aktif olan kullanıcı ID'lerini getirir."""
     with sqlite3.connect(DB_YOLU, timeout=10) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT user_id FROM subscribers WHERE is_subscribed = 1")
