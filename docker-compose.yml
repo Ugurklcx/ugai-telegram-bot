@@ -4,11 +4,11 @@ services:
   ugai_bot:
     build: .
     container_name: ugai_telegram_bot
-    restart: always  # Bot veya VDS çökse bile otomatik yeniden başlatır
+    restart: always  
     env_file:
-      - .env         # .env dosyasındaki API key ve tokenları okur
+      - .env        
     volumes:
-      # SQLite veritabanının (Database.db) konteyner silinse bile kaybolmaması için:
+      
       - ./Database.db:/app/Database.db
     logging:
       driver: "json-file"
