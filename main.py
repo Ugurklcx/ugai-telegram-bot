@@ -14,6 +14,7 @@ from telegram.ext import (
     CallbackQueryHandler,
     ContextTypes
 )
+from telegram.request import HTTPXRequest
 
 # DATABASE STARTER
 from database import tabloyu_olustur
@@ -35,11 +36,9 @@ class SensitiveDataFormatter(logging.Formatter):
         
         clean_msg = re.sub(r'bot\d+:[A-Za-z0-9_-]+', 'bot***TOKEN_MASKED***', original_msg)
         clean_msg = re.sub(r'/bot[0-9]+:[^/]+/', '/bot***TOKEN_MASKED***/', clean_msg)
-        
         clean_msg = re.sub(r'AIzaSy[A-Za-z0-9_-]{33}', 'AIzaSy***KEY_MASKED***', clean_msg)
         
         return clean_msg
-
 
 
 handler = logging.StreamHandler(sys.stdout)
@@ -53,7 +52,7 @@ for h in logger.handlers[:]:
 logger.addHandler(handler)
 
 
-# 3. GLOBAL ERROR HANDLER
+# 2. GLOBAL ERROR HANDLER
 async def global_error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Yakalanmayan hataları loglar ve botun çökmesini engeller."""
     logger.error("Hata oluştu!", exc_info=context.error)
@@ -67,11 +66,27 @@ if sys.platform == 'win32':
 load_dotenv()
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 
+
 def main():
+    if not TOKEN:
+        raise ValueError("❌ TELEGRAM_TOKEN bulunamadı! .env dosyasını kontrol et.")
+
     tabloyu_olustur()
     logger.info("🤖 UGAI ÇALIŞIYOR!...")
 
-    app = ApplicationBuilder().token(TOKEN).build()
+    # Timeout sürelerini artırarak HTTPX isteği oluşturuyoruz
+    request_config = HTTPXRequest(
+        connect_timeout=20.0,
+        read_timeout=20.0
+    )
+
+    # Uygulamayı timeout ayarları ve token ile tek seferde inşa ediyoruz
+    app = (
+        ApplicationBuilder()
+        .token(TOKEN)
+        .request(request_config)
+        .build()
+    )
 
     # GLOBAL ERROR HANDLER
     app.add_error_handler(global_error_handler)
@@ -80,11 +95,15 @@ def main():
     app.add_handler(CommandHandler("pass", password_creator_handler))
     app.add_handler(CommandHandler("steam", steam_command))
     app.add_handler(CommandHandler("gold", altin_komutu_handler))
-    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), ask_ai))
     app.add_handler(CommandHandler("start", start_komutu_handler))
     app.add_handler(CommandHandler("help", start_komutu_handler))
+    
+    # Callback Handlers
     app.add_handler(CallbackQueryHandler(start_buttons_callback, pattern="^(get_gold_now|get_steam_now)$"))
     app.add_handler(CallbackQueryHandler(gold_button_callback, pattern="^(sub_gold|unsub_gold)$"))
+
+    # AI Chat Handler (Tüm metinleri yakaladığı için en sonda durmalı)
+    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), ask_ai))
 
     app.run_polling()
 
