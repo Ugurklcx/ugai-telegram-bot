@@ -25,39 +25,42 @@ from handlers.chat import ask_ai
 from handlers.gold_handler import altin_komutu_handler, build_gold_message, gold_button_callback
 from handlers.start_handler import start_komutu_handler, start_buttons_callback
 
-# 1. LOG MASKELEME FİLTRESİ (Token & API Key Gizleyici)
-class SensitiveDataFilter(logging.Filter):
-    """Loglarda Telegram Bot Token ve API anahtarlarının açık metin görünmesini engeller."""
-    def filter(self, record):
-        if isinstance(record.msg, str):
-            # Telegram Bot Token Maskeleme
-            record.msg = re.sub(r'bot\d+:[A-Za-z0-9_-]+', 'bot***TOKEN_MASKED***', record.msg)
-            record.msg = re.sub(r'/bot[0-9]+:[^/]+/', '/bot***TOKEN_MASKED***/', record.msg)
-            # Gemini / Google API Key Maskeleme
-            record.msg = re.sub(r'AIzaSy[A-Za-z0-9_-]{33}', 'AIzaSy***KEY_MASKED***', record.msg)
-        return True
 
-# 2. LOGGING SETUP
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-logger = logging.getLogger(__name__)
+# 1. LOGGING CONFIGURATION
+class SensitiveDataFormatter(logging.Formatter):
+    """Ekrana veya dosyaya basılan NİHAİ log metnindeki tüm token ve key'leri temizler."""
+    
+    def format(self, record):
+        original_msg = super().format(record)
+        
+        clean_msg = re.sub(r'bot\d+:[A-Za-z0-9_-]+', 'bot***TOKEN_MASKED***', original_msg)
+        clean_msg = re.sub(r'/bot[0-9]+:[^/]+/', '/bot***TOKEN_MASKED***/', clean_msg)
+        
+        clean_msg = re.sub(r'AIzaSy[A-Za-z0-9_-]{33}', 'AIzaSy***KEY_MASKED***', clean_msg)
+        
+        return clean_msg
 
-# Filtreyi tüm log sistemine uygula
-sensitive_filter = SensitiveDataFilter()
-logging.getLogger().addFilter(sensitive_filter)
-logging.getLogger("httpx").addFilter(sensitive_filter)
-logging.getLogger("telegram").addFilter(sensitive_filter)
 
-# 3. KÜRESEL HATA YAKALAYICI (Global Error Handler)
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setFormatter(SensitiveDataFormatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+for h in logger.handlers[:]:
+    logger.removeHandler(h)
+logger.addHandler(handler)
+
+
+# 3. GLOBAL ERROR HANDLER
 async def global_error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Yakalanmayan hataları loglar ve botun çökmesini engeller."""
     logger.error("Hata oluştu!", exc_info=context.error)
     if isinstance(update, Update) and update.effective_message:
         await update.effective_message.reply_text("⚠️ Bir işlem sırasında beklenmedik bir hata oluştu.")
 
-# Windows Event Loop Fix
+
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
